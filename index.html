@@ -14,7 +14,24 @@
     .info-grid { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; }
     .info-label { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
     .info-value { color: #1e293b; font-size: 0.95rem; }
-    .subsidiary-tag { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 12px; margin: 3px; font-size: 0.8rem; }
+    
+    /* Org Chart Styles */
+    .org-chart { display: flex; flex-direction: column; gap: 30px; }
+    .org-level { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .org-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px; text-align: center; position: relative; }
+    .org-box.level-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .org-box.level-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .org-box.level-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .org-box-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+    .org-box-subtitle { font-size: 0.75rem; opacity: 0.9; }
+    .org-connector { height: 20px; border-left: 2px solid #cbd5e1; margin: 0 auto; width: 2px; }
+    
+    /* News Styles */
+    .news-item { padding: 16px; border-left: 3px solid #3b82f6; background: #eff6ff; border-radius: 8px; margin-bottom: 12px; }
+    .news-date { color: #6b7280; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .news-title { color: #1e293b; font-weight: 600; margin-top: 4px; font-size: 0.95rem; }
+    .news-text { color: #475569; font-size: 0.85rem; margin-top: 8px; line-height: 1.5; }
+    .news-badge { display: inline-block; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 8px; }
   </style>
 </head>
 <body class="h-full bg-slate-50">
@@ -66,12 +83,13 @@
         </div>
 
         <div id="detailView" class="hidden">
-          <div class="flex border-b mb-6">
-            <button onclick="switchTab(0)" class="tab px-6 py-4 tab-active" id="tab0">Обзор</button>
-            <button onclick="switchTab(1)" class="tab px-6 py-4" id="tab1">Контакты</button>
-            <button onclick="switchTab(2)" class="tab px-6 py-4" id="tab2">Структура</button>
-            <button onclick="switchTab(3)" class="tab px-6 py-4" id="tab3">Взаимодействия</button>
-            <button onclick="switchTab(4)" class="tab px-6 py-4" id="tab4">Заметки</button>
+          <div class="flex border-b mb-6 overflow-x-auto">
+            <button onclick="switchTab(0)" class="tab px-6 py-4 tab-active whitespace-nowrap" id="tab0">Обзор</button>
+            <button onclick="switchTab(1)" class="tab px-6 py-4 whitespace-nowrap" id="tab1">Контакты</button>
+            <button onclick="switchTab(2)" class="tab px-6 py-4 whitespace-nowrap" id="tab2">Структура</button>
+            <button onclick="switchTab(3)" class="tab px-6 py-4 whitespace-nowrap" id="tab3">Новости</button>
+            <button onclick="switchTab(4)" class="tab px-6 py-4 whitespace-nowrap" id="tab4">Взаимодействия</button>
+            <button onclick="switchTab(5)" class="tab px-6 py-4 whitespace-nowrap" id="tab5">Заметки</button>
           </div>
 
           <!-- ОБЗОР -->
@@ -96,11 +114,6 @@
                 <div class="info-label mb-3">Описание деятельности</div>
                 <p id="clientDescription" class="text-slate-600 leading-relaxed"></p>
               </div>
-
-              <div class="mt-6" id="subsidiariesBlock">
-                <div class="info-label mb-3">Ключевые дочерние / связанные компании</div>
-                <div id="subsidiariesList" class="flex flex-wrap"></div>
-              </div>
             </div>
           </div>
 
@@ -118,23 +131,35 @@
             </div>
           </div>
 
-          <!-- СТРУКТУРА -->
+          <!-- СТРУКТУРА (с визуализацией) -->
           <div id="tabContent2" class="tab-content hidden bg-white rounded-3xl p-8">
-            <h3 class="font-semibold text-lg mb-4">Структура компании</h3>
-            <div id="structurePreloaded" class="text-slate-600 text-sm leading-relaxed mb-4"></div>
-            <textarea id="structureText" class="w-full h-72 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
-                      placeholder="Дополните оргструктуру, дочерние компании, ключевых лиц..."></textarea>
+            <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+              <i class="fa-solid fa-sitemap"></i> Организационная структура
+            </h3>
+            <div id="orgChartContainer" class="mb-8"></div>
+            <hr class="my-6">
+            <div class="text-sm text-slate-600 mb-4" id="structureText"></div>
+            <textarea id="structureNotes" class="w-full h-40 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
+                      placeholder="Дополнительные заметки по структуре..."></textarea>
+          </div>
+
+          <!-- НОВОСТИ -->
+          <div id="tabContent3" class="tab-content hidden bg-white rounded-3xl p-8">
+            <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+              <i class="fa-solid fa-newspaper"></i> Актуальные новости
+            </h3>
+            <div id="newsContainer"></div>
           </div>
 
           <!-- ВЗАИМОДЕЙСТВИЯ -->
-          <div id="tabContent3" class="tab-content hidden bg-white rounded-3xl p-8">
+          <div id="tabContent4" class="tab-content hidden bg-white rounded-3xl p-8">
             <h3 class="font-semibold text-lg mb-4">История взаимодействий</h3>
             <textarea id="historyText" class="w-full h-96 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
                       placeholder="Последние встречи, договоры, запросы, результаты..."></textarea>
           </div>
 
           <!-- ЗАМЕТКИ -->
-          <div id="tabContent4" class="tab-content hidden bg-white rounded-3xl p-8">
+          <div id="tabContent5" class="tab-content hidden bg-white rounded-3xl p-8">
             <h3 class="font-semibold text-lg mb-4">Личные заметки</h3>
             <textarea id="notesText" class="w-full h-96 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
                       placeholder="То, что важно только для вас..."></textarea>
@@ -167,14 +192,26 @@ const clientsData = [
     employees: "498 чел. (2024)",
     revenue: "2 666 016 000 ₽ (2024)",
     profit: "387 096 000 ₽ (2024)",
-    ceo: "Конарев Андрей Александрович — Генеральный директор",
+    ceo: "Конарев Андрей Александрович — Генеральный директор (с августа 2025)",
     description: "Основано в 1971 г. как Белгородский завод «Авторемгормаш». Крупнейший в РФ производитель бурового инструмента: более 300 модификаций буровых долот (Ø от 59 до 444 мм), буровые коронки, штанги, а также запчасти к карьерным самосвалам БелАЗ (130–220 т). Продукция используется на Стойленском и Михайловском ГОКах, горнодобывающих предприятиях Казахстана, Узбекистана, Монголии, Ирана, Вьетнама, стран Африки. Производство соответствует ISO 9001-2015, ISO 14001-2016, ISO 45001-2020. Площадь производственных помещений — более 30 000 кв.м.",
-    subsidiaries: [],
     contacts: [
       { fio: "Конарев Андрей Александрович", position: "Генеральный директор", phone: "", email: "" },
       { fio: "Отдел продаж", position: "Отдел продаж", phone: "+7 (4722) 32-41-29", email: "gormash@belgormash.ru" }
     ],
-    structure: "Единственное юр. лицо без дочерних обществ. Зарегистрировано 20 дополнительных видов деятельности. Есть торговая марка «G» (действительна до 03.01.2032)."
+    orgChart: [
+      { level: 0, items: [{ title: "АО ГОРМАШ", subtitle: "Белгород" }] },
+      { level: 1, items: [{ title: "Генеральный директор", subtitle: "Конарев А.А." }] },
+      { level: 2, items: [
+        { title: "Производство", subtitle: "300+ модификаций долот" },
+        { title: "Сбыт", subtitle: "РФ, Казахстан, Узбекистан, Иран" },
+        { title: "ИТ-инфраструктура", subtitle: "Развитая цифровизация" }
+      ]}
+    ],
+    structureText: "Единственное юр. лицо без дочерних обществ. Зарегистрировано 20 дополнительных видов деятельности. Есть торговая марка «G» (действительна до 03.01.2032). Держатель реестра акционеров — ООО «Реестр-РН».",
+    news: [
+      { date: "Февраль 2026", title: "Цифровизация: переход на российские серверы", text: "ГОРМАШ завершил внедрение серверов Inferit RS108 от российского вендора «Инферит». Обновление затронуло ключевую ИТ-инфраструктуру предприятия. Сервер собран на процессорах Intel Xeon Scalable, поддерживает 24 модуля DDR4-памяти.", badge: "ИТ" },
+      { date: "Август 2025", title: "Смена руководства", text: "Андрей Конарев назначен генеральным директором АО ГОРМАШ. До этого компанию возглавлял Владимир Башкатов.", badge: "Менеджмент" }
+    ]
   },
   {
     id: "solidcore",
@@ -192,17 +229,32 @@ const clientsData = [
     founded: "1998 (как Polymetal); переименование — июнь 2024",
     capital: "—",
     employees: "—",
-    revenue: "—",
-    profit: "—",
+    revenue: "$1,5 млрд (2025)",
+    profit: "$662 млн чистая прибыль (2025, +24% г/г)",
     ceo: "Виталий Несис — Главный исполнительный директор (CEO)",
-    description: "Ведущий производитель золота в Казахстане, акции котируются на Astana International Exchange (тикер AIX: CORE). В 2024 г. компания продала российские активы (АО «Полиметалл») и сменила название с Polymetal International на Solidcore Resources. Производство в 2024 г. — ~490 тыс. унций золота. Стратегия — развитие через геологоразведку и приобретение новых проектов, планируемые инвестиции — более $1 млрд за 5 лет.",
-    subsidiaries: ["Кызыл (область Абай) — действующий рудник Бакырчик", "Варваринский хаб (Костанайская обл.) — рудники Варвара и Комар", "Иртышский ГМК — крупнейший проект развития", "ТОО «Solidcore Eurasia» — управляющая компания в Астане"],
+    description: "Ведущий производитель золота в Казахстане, акции котируются на Astana International Exchange (тикер AIX: CORE). В 2024 г. компания продала российские активы (АО «Полиметалл») и сменила название с Polymetal International на Solidcore Resources. Производство в 2025 г. — 395 тыс. унций золота. Стратегия — развитие через геологоразведку и приобретение новых проектов, планируемые инвестиции — более $1 млрд за 5 лет.",
     contacts: [
       { fio: "Виталий Несис", position: "CEO", phone: "", email: "" },
       { fio: "Кирилл Кузнецов", position: "IR (связи с инвесторами)", phone: "+7 (7172) 47-66-55", email: "ir@solidcore-resources.com" },
       { fio: "Еркин Удербай", position: "Контакт для СМИ", phone: "+7 (7172) 47-66-55", email: "media@solidcore-resources.kz" }
     ],
-    structure: "Зарегистрирована в AIFC (Astana International Financial Centre), Казахстан.\n\nАктивы:\n• Кызыл (область Абай) — рудник Бакырчик (автоклавная технология POX)\n• Варваринский хаб (Костанайская обл.) — рудники Варвара и Комар (открытая добыча до 2042 г.)\n• Иртышский ГМК — новый проект строительства\n• ТОО «Solidcore Eurasia» (Астана) — представление интересов и управление активами в Казахстане и ЦА.\n\nОснователь — Александр Несис (ICT Group), 1998 г., Санкт-Петербург."
+    orgChart: [
+      { level: 0, items: [{ title: "Solidcore Resources plc", subtitle: "Астана, Казахстан (AIFC)" }] },
+      { level: 1, items: [{ title: "CEO Виталий Несис", subtitle: "Управление" }] },
+      { level: 2, items: [
+        { title: "ТОО Solidcore Eurasia", subtitle: "Управляющая компания, Астана" },
+        { title: "Кызыл (Бакырчик)", subtitle: "Область Абай" },
+        { title: "Варваринский хаб", subtitle: "Костанайская обл." },
+        { title: "Иртышский ГМК", subtitle: "Строительство" }
+      ]}
+    ],
+    structureText: "Зарегистрирована в AIFC (Astana International Financial Centre), Казахстан. Основатель — Александр Несис (ICT Group), 1998 г., Санкт-Петербург. В 2024 продала российские активы для снятия санкционных рисков. Акции котируются на AIX (тикер CORE).",
+    news: [
+      { date: "Март 2026", title: "Рекордная прибыль: $662 млн за 2025 год", text: "Скорректированная чистая прибыль выросла на 40% до $701 млн. Выручка увеличилась на 13% до $1,5 млрд благодаря росту цен на золото. Дивиденды не выплачиваются — средства направлены на строительство ЕГМК и новые M&A-сделки.", badge: "Финансы" },
+      { date: "Февраль 2026", title: "Кредит от KfW IPEX-Bank на $100 млн", text: "Подписаны основные условия кредитной линии на срок до 7 лет для финансирования Иртышского ГМК. Компания также ведет переговоры о кредитах на $600-700 млн.", badge: "Инвестиции" },
+      { date: "Декабрь 2025", title: "Запуск солнечной электростанции на Варваринском", text: "АО «Варваринское» ввело в строй солнечную электростанцию. В 2026 году планируется запуск газопоршневой электростанции мощностью 40 МВт.", badge: "ESG" },
+      { date: "Январь 2026", title: "Прогноз производства: +37% в 2026", text: "Компания ожидает роста производства до 540 тыс. унций золотого эквивалента. Капитальные затраты вырастут вдвое — до $510 млн.", badge: "Производство" }
+    ]
   },
   {
     id: "polyplastic",
@@ -220,16 +272,37 @@ const clientsData = [
     founded: "02.04.2004 (НПП «Полипластик» с 19.08.1991)",
     capital: "993 463 937,50 ₽",
     employees: "—",
-    revenue: "43,9 млрд ₽ (2024)",
+    revenue: "107,7 млрд ₽ (2024, рекордная)",
     profit: "—",
     ceo: "Коржов Олег Викторович — Генеральный директор",
-    description: "Крупнейший в России и ЕАЭС производитель полимерных труб для газо- и водоснабжения, тепловых труб и композиционных материалов. Включает 30 предприятий в России, Белоруссии и Казахстане. Входит в перечень системообразующих организаций РФ (с 2020). Рейтинг АКРА — A-(RU), стабильный (2024, подтверждён в 2025). Контролирующие собственники (нач. 2025): Лев Гориловский (65%), Газпромбанк (25%), Мирон Гориловский (10%). 84 зарегистрированные торговые марки.",
-    subsidiaries: ["Климовский трубный завод", "Кохановский трубный завод (Белоруссия)", "Radius Systems", "AEON Group", "Subterra", "Полимер-Импэкс", "Полиэтр", "Полипластик-Технопол", "Полимер-Композит", "Пластик ООО", "Пластполимерснаб"],
+    description: "Крупнейший в России и ЕАЭС производитель полимерных труб для газо- и водоснабжения, тепловых труб и композиционных материалов. Включает 32 предприятия в России, Белоруссии и Казахстане. Входит в перечень системообразующих организаций РФ (с 2020). Рейтинг АКРА — A-(RU), стабильный. Контролирующие собственники: Лев Гориловский (65%), Газпромбанк (25%), Мирон Гориловский (10%). 84 зарегистрированные торговые марки.",
     contacts: [
       { fio: "Коржов Олег Викторович", position: "Генеральный директор", phone: "", email: "" },
+      { fio: "Гориловский Лев", position: "Президент группы, основной акционер (65%)", phone: "", email: "" },
       { fio: "Приёмная", position: "Общий контакт", phone: "+7 (495) 745-68-57", email: "info@polyplastic.ru" }
     ],
-    structure: "Управляющая компания: ООО «Группа Полипластик» (Москва).\n\nНаправления бизнеса:\n1. Производство труб для газо-водоснабжения\n2. Производство тепловых труб\n3. Производство композиционных материалов\n\n30 предприятий в РФ, Белоруссии и Казахстане.\nУчредители: Гориловский Мирон Исаакович, АО «Ааа Управление Капиталом», ООО «Строительно-инжиниринговая группа предприятий»."
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Группа Полипластик", subtitle: "Москва, управляющая компания" }] },
+      { level: 1, items: [
+        { title: "Лев Гориловский", subtitle: "Президент (65%)" },
+        { title: "Газпромбанк", subtitle: "25%" },
+        { title: "Мирон Гориловский", subtitle: "10%" }
+      ]},
+      { level: 2, items: [
+        { title: "32 завода", subtitle: "РФ, Беларусь, Казахстан" },
+        { title: "41 торговый дом", subtitle: "с филиалами" },
+        { title: "НИИ + 4 лаборатории", subtitle: "R&D" },
+        { title: "Учебный центр", subtitle: "с региональными филиалами" }
+      ]}
+    ],
+    structureText: "Учредители: Гориловский Мирон Исаакович, АО «Ааа Управление Капиталом», ООО «Строительно-инжиниринговая группа предприятий». 32 завода, мощность > 750 тыс. тонн/год. Дочерние компании: Климовский трубный завод, Кохановский трубный завод (Белоруссия), Radius Systems, AEON Group, Subterra, Полимер-Импэкс, Полиэтр и др.",
+    news: [
+      { date: "Декабрь 2025", title: "Победа в конкурсе «Главное событие московской промышленности»", text: "Группа ПОЛИПЛАСТИК стала победителем благодаря производственному рекорду — выпуску более 13 миллионов метров труб из сшитого полиэтилена за 2025 год.", badge: "Награды" },
+      { date: "Декабрь 2025", title: "Цифровая модель управления коммунальной инфраструктурой", text: "Представлена собственная цифровая модель для управления коммунальными сетями — инновация для российского рынка.", badge: "Инновации" },
+      { date: "Октябрь 2025", title: "Запуск производства насосного оборудования", text: "Новое насосное оборудование заместит зарубежные аналоги. Группа развивает направление крупных насосов, которые ранее в России не производились.", badge: "Производство" },
+      { date: "Сентябрь 2025", title: "Новый завод в Калужской области", text: "Открыто производство новых для России полимерных труб, расширяющее географию присутствия компании.", badge: "Расширение" },
+      { date: "Май 2025", title: "Переговоры с ОАЭ об экспорте технологий", text: "Группа «Полипластик» обсуждает с партнерами из ОАЭ возможность экспорта собственной технологии производства высокоатмосферных полимерных труб для нефтяной промышленности для проекта в Абу-Даби.", badge: "Экспорт" }
+    ]
   },
   {
     id: "szds",
@@ -251,12 +324,27 @@ const clientsData = [
     profit: "1 785 000 ₽ (2024)",
     ceo: "Нечаев Илья Александрович — Генеральный директор (с 2013 г.)",
     description: "Одна из крупнейших подрядных дорожно-строительных организаций Архангельской области и Северо-Западного региона. Специализация — строительство, ремонт и реконструкция автомобильных дорог и автомагистралей, разработка гравийных и песчаных карьеров. Основной заказчик — ГКУ «Архангельскавтодор». Участие в 153 торгах (выиграно 117). 23 лицензии на геологическое изучение недр.",
-    subsidiaries: [],
     contacts: [
       { fio: "Нечаев Илья Александрович", position: "Генеральный директор", phone: "", email: "" },
       { fio: "Приёмная", position: "Общий контакт", phone: "+7 (8182) 61-01-09", email: "" }
     ],
-    structure: "Семейный бизнес.\n\nУчредители (4 физ. лица):\n• Нечаев Александр Федорович — 70%\n• Нечаева Анна Александровна\n• Морозов Александр Александрович\n• Жданов Николай Тихонович\n\n1 филиал. Штат — 510 чел. (2024, снижение на 10% от 2023)."
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Севзапдорстрой", subtitle: "Архангельск" }] },
+      { level: 1, items: [
+        { title: "Нечаев Александр", subtitle: "Основной владелец (70%)" },
+        { title: "Нечаев Илья", subtitle: "Генеральный директор" }
+      ]},
+      { level: 2, items: [
+        { title: "Дорожное строительство", subtitle: "510 сотрудников" },
+        { title: "Разработка карьеров", subtitle: "23 лицензии" },
+        { title: "Парк техники", subtitle: "> 200 единиц" }
+      ]}
+    ],
+    structureText: "Семейный бизнес. Учредители (4 физ. лица): Нечаев Александр Федорович — 70%, Нечаева Анна Александровна, Морозов Александр Александрович, Жданов Николай Тихонович. 1 филиал. Штат — 510 чел. (2024).",
+    news: [
+      { date: "Февраль 2026", title: "РИСК: Иск о взыскании неустойки от Минтранса Приморья", text: "Минтранс Приморского края требует взыскать 14 млн рублей неустойки за срыв сроков ремонта участка автодороги «Раздольное — Хасан». Срок выполнения — до 15 ноября 2025, но работы не завершены. Компания готовится к ликвидации, возбуждено дело о банкротстве.", badge: "Банкротство" },
+      { date: "Февраль 2026", title: "Решение о ликвидации общества", text: "3 февраля 2026 года внеочередное собрание участников «Севзапдорстроя» приняло решение о ликвидации общества. Основной владелец — Александр Нечаев (70% капитала).", badge: "Ликвидация" }
+    ]
   },
   {
     id: "sibcem",
@@ -277,14 +365,35 @@ const clientsData = [
     revenue: "3 441 967 000 ₽ (2024, ХК)",
     profit: "4 678 025 000 ₽ (2024, ХК)",
     ceo: "Шарыкин Олег Витальевич — Президент (с 2014 г.)",
-    description: "Один из крупнейших производителей цемента в России. Общая мощность предприятий — 9 млн тонн цемента в год. Холдинг объединяет цементные заводы в Кемеровской, Новосибирской областях, Красноярском крае и Бурятии. Собственный транспортно-логистический центр «КузбассТрансЦемент» с парком 5 164 единицы ж/д подвижного состава. Представительство в Москве (ул. Жуковского, 17). Совместная частная и иностранная собственность.",
-    subsidiaries: ["ООО «Топкинский цемент» (Топки, Кемеровская обл.)", "ООО «Красноярский цемент» (Красноярск)", "ООО «Тимлюйцемент» (Каменск, Бурятия)", "АО «Искитимцемент» (Искитим, Новосибирская обл.)", "АО «Ангарскцемент»", "ООО «Сибирский бетон» (Новосибирск)", "ООО «КузбассТрансЦемент» (Кемерово)", "ООО «Сибцемсервис» (Кемерово)", "ООО «ЗапСибЦемент» (Кемерово)", "ООО «Горная Компания»"],
+    description: "Один из крупнейших производителей цемента в России. Общая мощность предприятий — 9 млн тонн цемента в год. Холдинг объединяет цементные заводы в Кемеровской, Новосибирской областях, Красноярском крае и Бурятии. Собственный транспортно-логистический центр «КузбассТрансЦемент» с парком 5 164 единицы ж/д подвижного состава. Представительство в Москве (ул. Жуковского, 17).",
     contacts: [
       { fio: "Шарыкин Олег Витальевич", position: "Президент", phone: "", email: "" },
+      { fio: "Рассказов Геннадий", position: "Первый вице-президент", phone: "", email: "" },
       { fio: "Приёмная ХК", position: "Общий контакт", phone: "+7 (3842) 49-63-00", email: "v.grebnev@sibcem.ru" },
       { fio: "Представительство (Москва)", position: "Москва, ул. Жуковского, 17", phone: "", email: "" }
     ],
-    structure: "Холдинговая структура: АО «ХК «Сибцем» — управляющая компания.\n\nЦементные заводы (мощность 9 млн т/год):\n• Топкинский цемент (Кемеровская обл.) — 100%\n• Красноярский цемент — 100%\n• Тимлюйцемент (Бурятия) — 100%\n• Искитимцемент (Новосибирская обл.)\n• Ангарскцемент (Иркутская обл.)\n\nСервисы и логистика:\n• КузбассТрансЦемент — ж/д логистика, 5 164 вагона\n• Сибцемсервис — ремонт, ~400 чел.\n• Сибирский бетон (Новосибирск) — 5%\n\nДолевое участие: 26% — ООО «Русская цементная компания» (Москва)\nОсновной акционер — ООО «ФПС Сибконкорд» (47%) и Олег Шарыкин (6,1%).\n7 филиалов, 12 учреждённых организаций."
+    orgChart: [
+      { level: 0, items: [{ title: "АО ХК Сибцем", subtitle: "Кемерово, управляющая компания" }] },
+      { level: 1, items: [
+        { title: "Олег Шарыкин", subtitle: "Президент (6,1%)" },
+        { title: "ООО ФПС Сибконкорд", subtitle: "47%" },
+        { title: "Русская цементная компания", subtitle: "26%" }
+      ]},
+      { level: 2, items: [
+        { title: "Топкинский цемент", subtitle: "Кемеровская обл." },
+        { title: "Красноярский цемент", subtitle: "Красноярск" },
+        { title: "Искитимцемент", subtitle: "Новосибирск" },
+        { title: "Тимлюйцемент", subtitle: "Бурятия" },
+        { title: "КузбассТрансЦемент", subtitle: "5 164 вагона" }
+      ]}
+    ],
+    structureText: "Холдинговая структура. Цементные заводы (мощность 9 млн т/год): Топкинский цемент (Кемеровская обл.), Красноярский цемент, Тимлюйцемент (Бурятия), Искитимцемент (Новосибирск), Ангарскцемент. Сервисы: КузбассТрансЦемент — 5 164 вагона, Сибцемсервис (~400 чел.). Основной акционер — ООО «ФПС Сибконкорд» (47%) и Олег Шарыкин (6,1%). 7 филиалов, 12 учреждённых организаций.",
+    news: [
+      { date: "Февраль 2026", title: "Красноярский цемент: производство упало на 18% в 2025", text: "ООО «Красноярский цемент» (дочернее общество АО «ХК «Сибцем») произвело 625,5 тыс. тонн цемента за январь-декабрь 2025 — на 18% меньше, чем в 2024 году.", badge: "Производство" },
+      { date: "Февраль 2026", title: "Союзцемент: прогноз спада потребления на 15% в 2026", text: "Отраслевое объединение «Союзцемент» прогнозирует снижение потребления цемента в РФ до 52 млн тонн против 61 млн тонн в 2025. В январе 2026 спад уже составил 28% г/г. Причины: высокая ставка ЦБ, закрытие льготной ипотеки, рост импорта (6,2% в 2025).", badge: "Рынок" },
+      { date: "Октябрь 2025", title: "Сибцем прогнозирует падение продаж на 16% в 2025", text: "Компания ожидает реализацию 4,6 млн тонн цемента против 5,5 млн тонн в 2024. В 2026 — еще -10%. Загрузка заводов — 51%. Первый вице-президент Геннадий Рассказов: «70% издержек неподконтрольны компании — электроэнергия, газ, уголь, транспорт».", badge: "Прогноз" },
+      { date: "Сентябрь 2025", title: "Призыв ограничить импорт цемента до 1,5 млн тонн", text: "Директор по маркетингу Андрей Рубцов на форуме «СтроимСибирь-2035» заявил о необходимости межправительственных соглашений с Белоруссией, Казахстаном, Китаем для защиты российских производителей.", badge: "Регулирование" }
+    ]
   },
   {
     id: "karavan",
@@ -306,9 +415,14 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "ТОО (товарищество с ограниченной ответственностью) зарегистрировано в Казахстане. Подробная публичная информация о деятельности компании в открытых источниках ограничена. Рекомендуется дополнить карточку данными от контактного лица клиента.",
-    subsidiaries: [],
     contacts: [],
-    structure: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента."
+    orgChart: [
+      { level: 0, items: [{ title: "ТОО Караван Ресурсис LTD", subtitle: "Казахстан" }] }
+    ],
+    structureText: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента.",
+    news: [
+      { date: "—", title: "Информация отсутствует", text: "Новостей в открытых источниках не найдено. Рекомендуется уточнить у контактного лица клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "kari",
@@ -330,9 +444,18 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Федеральная розничная сеть магазинов обуви и аксессуаров «kari». Одна из крупнейших обувных сетей в России и СНГ с тысячами магазинов. Позиционируется в сегменте массового рынка. Связана с ООО «Купишуз» (совместное управление онлайн-каналом продаж). Головной офис — Москва.",
-    subsidiaries: ["ООО «Купишуз» (связанная структура)"],
     contacts: [],
-    structure: "Розничная сеть с тысячами магазинов по РФ и СНГ.\nСвязанная структура — ООО «Купишуз» (e-commerce).\nНеобходимо уточнить актуальный менеджмент и реквизиты у клиента."
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Кари", subtitle: "Москва, головной офис" }] },
+      { level: 1, items: [
+        { title: "Розничная сеть KARI", subtitle: "Тысячи магазинов в РФ и СНГ" },
+        { title: "ООО Купишуз", subtitle: "E-commerce канал" }
+      ]}
+    ],
+    structureText: "Розничная сеть с тысячами магазинов по РФ и СНГ. Связанная структура — ООО «Купишуз» (e-commerce). Необходимо уточнить актуальный менеджмент и реквизиты у клиента.",
+    news: [
+      { date: "—", title: "Информация ограничена", text: "Публичная информация о последних новостях компании в открытых источниках ограничена. Рекомендуется уточнить у клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "kupishuz",
@@ -354,9 +477,17 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Онлайн-платформа по продаже обуви, связанная с розничной сетью «kari» (ООО «Кари»). Специализация — e-commerce обувь и аксессуары. Головной офис — Москва.",
-    subsidiaries: [],
     contacts: [],
-    structure: "Связана с ООО «Кари». Необходимо уточнить структуру и контакты у клиента."
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Купишуз", subtitle: "Москва, e-commerce" }] },
+      { level: 1, items: [
+        { title: "Связь с ООО Кари", subtitle: "Единая экосистема" }
+      ]}
+    ],
+    structureText: "Связана с ООО «Кари». Необходимо уточнить структуру и контакты у клиента.",
+    news: [
+      { date: "—", title: "Информация ограничена", text: "Публичная информация о последних новостях компании в открытых источниках ограничена. Рекомендуется уточнить у клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "shchekinoazot",
@@ -378,11 +509,21 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Одно из крупнейших предприятий химической промышленности России. Производство метанола, капролактама, серной кислоты, минеральных удобрений, а также широкого спектра химической продукции. Расположено в г. Первомайский Тульской области. Является градообразующим предприятием.",
-    subsidiaries: [],
     contacts: [
       { fio: "Общий контакт", position: "Приёмная", phone: "", email: "azot@azot.net" }
     ],
-    structure: "Необходимо уточнить актуальную структуру собственности и менеджмента у клиента.\nСайт: n-azot.ru"
+    orgChart: [
+      { level: 0, items: [{ title: "АО Щёкиноазот", subtitle: "Тульская обл., г. Первомайский" }] },
+      { level: 1, items: [
+        { title: "Производство метанола", subtitle: "" },
+        { title: "Производство капролактама", subtitle: "" },
+        { title: "Минеральные удобрения", subtitle: "" }
+      ]}
+    ],
+    structureText: "Необходимо уточнить актуальную структуру собственности и менеджмента у клиента. Сайт: n-azot.ru",
+    news: [
+      { date: "—", title: "Информация ограничена", text: "Публичная информация о последних новостях компании в открытых источниках ограничена. Рекомендуется уточнить у клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "kabex",
@@ -404,9 +545,14 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Производитель кабельно-проводниковой продукции. Расположен в г. Ревда, Свердловская область. Специализация — производство силовых кабелей, контрольных кабелей и проводов различного назначения.",
-    subsidiaries: [],
     contacts: [],
-    structure: "Необходимо уточнить у клиента.\nСайт: kabexgroup.ru"
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Кабельный завод КАБЭКС", subtitle: "Ревда, Свердловская обл." }] }
+    ],
+    structureText: "Необходимо уточнить у клиента. Сайт: kabexgroup.ru",
+    news: [
+      { date: "—", title: "Информация ограничена", text: "Публичная информация о последних новостях компании в открытых источниках ограничена. Рекомендуется уточнить у клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "fabrikakompozitov",
@@ -428,9 +574,14 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Производитель композитных материалов и изделий. Расположено в г. Нижний Новгород. Специализация — разработка и выпуск продукции из полимерных композитных материалов для строительной, автомобильной и других отраслей.",
-    subsidiaries: [],
     contacts: [],
-    structure: "Необходимо уточнить у клиента."
+    orgChart: [
+      { level: 0, items: [{ title: "ООО Фабрика Композитов", subtitle: "Нижний Новгород" }] }
+    ],
+    structureText: "Необходимо уточнить у клиента.",
+    news: [
+      { date: "—", title: "Информация ограничена", text: "Публичная информация о последних новостях компании в открытых источниках ограничена. Рекомендуется уточнить у клиента.", badge: "Нет данных" }
+    ]
   },
   {
     id: "indigo",
@@ -452,9 +603,14 @@ const clientsData = [
     profit: "—",
     ceo: "—",
     description: "Компания зарегистрирована в Таджикистане. Подробная публичная информация ограничена. Предположительно — деятельность в сфере телекоммуникаций / ИТ / торговли. Рекомендуется уточнить данные у контактного лица клиента.",
-    subsidiaries: [],
     contacts: [],
-    structure: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента."
+    orgChart: [
+      { level: 0, items: [{ title: "ЗАО Индиго Таджикистан", subtitle: "Таджикистан" }] }
+    ],
+    structureText: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента.",
+    news: [
+      { date: "—", title: "Информация отсутствует", text: "Новостей в открытых источниках не найдено. Рекомендуется уточнить у контактного лица клиента.", badge: "Нет данных" }
+    ]
   }
 ];
 
@@ -463,7 +619,7 @@ function saveLocalData() {
   if (!currentClient) return;
   const key = "client_" + currentClient.id;
   const data = {
-    structure: document.getElementById("structureText").value,
+    structureNotes: document.getElementById("structureNotes").value,
     history: document.getElementById("historyText").value,
     notes: document.getElementById("notesText").value
   };
@@ -476,18 +632,18 @@ function loadLocalData() {
   const raw = localStorage.getItem(key);
   if (raw) {
     const data = JSON.parse(raw);
-    document.getElementById("structureText").value = data.structure || "";
+    document.getElementById("structureNotes").value = data.structureNotes || "";
     document.getElementById("historyText").value = data.history || "";
     document.getElementById("notesText").value = data.notes || "";
   } else {
-    document.getElementById("structureText").value = "";
+    document.getElementById("structureNotes").value = "";
     document.getElementById("historyText").value = "";
     document.getElementById("notesText").value = "";
   }
 }
 
 document.addEventListener("input", function(e) {
-  if (["structureText","historyText","notesText"].includes(e.target.id)) saveLocalData();
+  if (["structureNotes","historyText","notesText"].includes(e.target.id)) saveLocalData();
 });
 
 // ===================== РЕНДЕР СПИСКА =====================
@@ -553,34 +709,69 @@ function showClient(clientId) {
     ["E-mail", currentClient.email],
   ];
   grid.innerHTML = fields.map(([label, value]) =>
-    `<div class="info-label">${label}</div><div class="info-value">${value && value !== "—" ? value : '<span class=\"text-slate-300\">не указано</span>'}</div>`
+    `<div class="info-label">${label}</div><div class="info-value">${value && value !== "—" ? value : '<span class="text-slate-300">не указано</span>'}</div>`
   ).join("");
 
-  // Description
   document.getElementById("clientDescription").textContent = currentClient.description;
 
-  // Subsidiaries
-  const subBlock = document.getElementById("subsidiariesBlock");
-  const subList = document.getElementById("subsidiariesList");
-  if (currentClient.subsidiaries && currentClient.subsidiaries.length > 0) {
-    subBlock.classList.remove("hidden");
-    subList.innerHTML = currentClient.subsidiaries.map(s => `<span class="subsidiary-tag">${s}</span>`).join("");
-  } else {
-    subBlock.classList.add("hidden");
-  }
-
-  // Contacts
+  // Контакты
   renderContactsTable();
 
-  // Structure preloaded
-  document.getElementById("structurePreloaded").innerHTML = currentClient.structure
-    ? currentClient.structure.replace(/\n/g, "<br>")
-    : '<span class="text-slate-400">Информация о структуре не загружена.</span>';
+  // Org Chart
+  renderOrgChart();
+
+  // Structure Text
+  document.getElementById("structureText").innerHTML = currentClient.structureText.replace(/\n/g, "<br>");
+
+  // News
+  renderNews();
 
   // Load local data
   loadLocalData();
 
   switchTab(0);
+}
+
+// ===================== ORG CHART =====================
+function renderOrgChart() {
+  const container = document.getElementById("orgChartContainer");
+  if (!currentClient.orgChart || currentClient.orgChart.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-center">Визуализация структуры не доступна</p>';
+    return;
+  }
+
+  container.innerHTML = currentClient.orgChart.map((level, idx) => {
+    const levelClass = `level-${level.level}`;
+    return `
+      ${idx > 0 ? '<div class="org-connector"></div>' : ''}
+      <div class="org-level">
+        ${level.items.map(item => `
+          <div class="org-box ${levelClass}">
+            <div class="org-box-title">${item.title}</div>
+            ${item.subtitle ? `<div class="org-box-subtitle">${item.subtitle}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+// ===================== NEWS =====================
+function renderNews() {
+  const container = document.getElementById("newsContainer");
+  if (!currentClient.news || currentClient.news.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-center">Новостей пока нет</p>';
+    return;
+  }
+
+  container.innerHTML = currentClient.news.map(item => `
+    <div class="news-item">
+      <div class="news-date">${item.date}</div>
+      <div class="news-title">${item.title}</div>
+      <div class="news-text">${item.text}</div>
+      ${item.badge ? `<span class="news-badge">${item.badge}</span>` : ''}
+    </div>
+  `).join('');
 }
 
 // ===================== ТАБЫ =====================
