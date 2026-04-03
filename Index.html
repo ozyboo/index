@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>База знаний • Корпоративные клиенты</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    .client-item:hover { background-color: #f1f5f9; }
+    .client-item.active { background-color: #e0e7ff; border-left: 3px solid #1e40af; }
+    .tab-active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 600; }
+    .detail-card { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05); }
+    .info-grid { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; }
+    .info-label { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+    .info-value { color: #1e293b; font-size: 0.95rem; }
+    .subsidiary-tag { display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 12px; margin: 3px; font-size: 0.8rem; }
+  </style>
+</head>
+<body class="h-full bg-slate-50">
+
+<div class="flex h-screen">
+
+  <!-- SIDEBAR -->
+  <div class="w-80 bg-white border-r border-slate-200 flex flex-col">
+    <div class="p-6 border-b">
+      <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+        <i class="fa-solid fa-folder-tree text-blue-700"></i>
+        База клиентов
+      </h1>
+      <p class="text-slate-500 text-sm mt-1">Аккаунт-менеджер • Корп. клиенты</p>
+    </div>
+
+    <div class="p-4">
+      <div class="relative">
+        <input id="searchInput" type="text" placeholder="Поиск клиента..."
+               class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-transparent focus:border-blue-300 rounded-2xl text-sm focus:outline-none">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+      </div>
+    </div>
+
+    <div id="clientList" class="flex-1 overflow-auto px-3 py-2 text-sm"></div>
+
+    <div class="p-4 border-t text-xs text-slate-400">
+      Всего клиентов: <span id="count" class="font-semibold text-slate-600">12</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="flex-1 flex flex-col">
+    <div class="h-16 border-b bg-white px-8 flex items-center justify-between">
+      <div id="currentClientHeader" class="flex items-center gap-3 text-xl font-semibold text-slate-700">
+        Выберите клиента из списка
+      </div>
+      <button onclick="copyAllInfo()"
+              class="flex items-center gap-2 px-4 py-2 text-sm bg-white border border-slate-300 hover:border-slate-400 rounded-xl transition-colors">
+        <i class="fa-solid fa-copy"></i> Копировать всё
+      </button>
+    </div>
+
+    <div id="mainContent" class="flex-1 p-8 overflow-auto">
+      <div class="max-w-5xl mx-auto">
+        <div id="welcome" class="text-center py-20 text-slate-400">
+          <i class="fa-solid fa-users text-6xl mb-6 opacity-30"></i>
+          <p class="text-xl">Выберите клиента слева,<br>чтобы посмотреть полную информацию</p>
+        </div>
+
+        <div id="detailView" class="hidden">
+          <div class="flex border-b mb-6">
+            <button onclick="switchTab(0)" class="tab px-6 py-4 tab-active" id="tab0">Обзор</button>
+            <button onclick="switchTab(1)" class="tab px-6 py-4" id="tab1">Контакты</button>
+            <button onclick="switchTab(2)" class="tab px-6 py-4" id="tab2">Структура</button>
+            <button onclick="switchTab(3)" class="tab px-6 py-4" id="tab3">Взаимодействия</button>
+            <button onclick="switchTab(4)" class="tab px-6 py-4" id="tab4">Заметки</button>
+          </div>
+
+          <!-- ОБЗОР -->
+          <div id="tabContent0" class="tab-content">
+            <div class="detail-card bg-white rounded-3xl p-8">
+              <div class="flex justify-between items-start mb-4">
+                <div id="clientIndustry" class="inline-flex items-center gap-2 text-emerald-700 bg-emerald-100 px-4 py-1 rounded-2xl text-sm font-medium"></div>
+                <a id="clientWebsite" href="#" target="_blank" class="text-blue-600 hover:underline flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-globe"></i> <span id="clientWebsiteText">Сайт компании</span>
+                </a>
+              </div>
+
+              <h2 id="clientName" class="text-3xl font-bold mt-2 text-slate-800"></h2>
+              <p id="clientFullName" class="text-slate-500 mt-1 text-base italic"></p>
+              <p id="clientLocation" class="text-slate-500 mt-1 text-lg flex items-center gap-2"><i class="fa-solid fa-location-dot text-red-400"></i><span id="clientLocationText"></span></p>
+
+              <hr class="my-6">
+
+              <div class="info-grid" id="overviewGrid"></div>
+
+              <div class="mt-8">
+                <div class="info-label mb-3">Описание деятельности</div>
+                <p id="clientDescription" class="text-slate-600 leading-relaxed"></p>
+              </div>
+
+              <div class="mt-6" id="subsidiariesBlock">
+                <div class="info-label mb-3">Ключевые дочерние / связанные компании</div>
+                <div id="subsidiariesList" class="flex flex-wrap"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- КОНТАКТЫ -->
+          <div id="tabContent1" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-8">
+              <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-address-book"></i> Ключевые контакты
+              </h3>
+              <table id="contactsTable" class="w-full text-sm"></table>
+              <button onclick="addContactRow()"
+                      class="mt-4 text-blue-600 hover:text-blue-700 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Добавить контакт
+              </button>
+            </div>
+          </div>
+
+          <!-- СТРУКТУРА -->
+          <div id="tabContent2" class="tab-content hidden bg-white rounded-3xl p-8">
+            <h3 class="font-semibold text-lg mb-4">Структура компании</h3>
+            <div id="structurePreloaded" class="text-slate-600 text-sm leading-relaxed mb-4"></div>
+            <textarea id="structureText" class="w-full h-72 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
+                      placeholder="Дополните оргструктуру, дочерние компании, ключевых лиц..."></textarea>
+          </div>
+
+          <!-- ВЗАИМОДЕЙСТВИЯ -->
+          <div id="tabContent3" class="tab-content hidden bg-white rounded-3xl p-8">
+            <h3 class="font-semibold text-lg mb-4">История взаимодействий</h3>
+            <textarea id="historyText" class="w-full h-96 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
+                      placeholder="Последние встречи, договоры, запросы, результаты..."></textarea>
+          </div>
+
+          <!-- ЗАМЕТКИ -->
+          <div id="tabContent4" class="tab-content hidden bg-white rounded-3xl p-8">
+            <h3 class="font-semibold text-lg mb-4">Личные заметки</h3>
+            <textarea id="notesText" class="w-full h-96 p-5 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-300 text-sm"
+                      placeholder="То, что важно только для вас..."></textarea>
+            <p class="text-xs text-slate-400 mt-3">Данные сохраняются в localStorage вашего браузера.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== ДАННЫЕ КЛИЕНТОВ =====================
+const clientsData = [
+  {
+    id: "gormash",
+    name: "ГОРМАШ АО",
+    fullName: "Акционерное общество «Белгородский завод горного машиностроения»",
+    location: "308015, Белгородская обл., г. Белгород, ул. Сумская, д. 72",
+    industry: "Горное машиностроение",
+    website: "https://belgormash.ru",
+    phones: ["+7 (4722) 32-41-29", "+7 (4722) 32-32-64", "+7 (910) 363-03-09"],
+    email: "gormash@belgormash.ru",
+    inn: "3124013819",
+    ogrn: "1023101645522",
+    okpo: "00187300",
+    kpp: "312301001",
+    founded: "25.05.1993",
+    capital: "8 300 000 ₽",
+    employees: "498 чел. (2024)",
+    revenue: "2 666 016 000 ₽ (2024)",
+    profit: "387 096 000 ₽ (2024)",
+    ceo: "Конарев Андрей Александрович — Генеральный директор",
+    description: "Основано в 1971 г. как Белгородский завод «Авторемгормаш». Крупнейший в РФ производитель бурового инструмента: более 300 модификаций буровых долот (Ø от 59 до 444 мм), буровые коронки, штанги, а также запчасти к карьерным самосвалам БелАЗ (130–220 т). Продукция используется на Стойленском и Михайловском ГОКах, горнодобывающих предприятиях Казахстана, Узбекистана, Монголии, Ирана, Вьетнама, стран Африки. Производство соответствует ISO 9001-2015, ISO 14001-2016, ISO 45001-2020. Площадь производственных помещений — более 30 000 кв.м.",
+    subsidiaries: [],
+    contacts: [
+      { fio: "Конарев Андрей Александрович", position: "Генеральный директор", phone: "", email: "" },
+      { fio: "Отдел продаж", position: "Отдел продаж", phone: "+7 (4722) 32-41-29", email: "gormash@belgormash.ru" }
+    ],
+    structure: "Единственное юр. лицо без дочерних обществ. Зарегистрировано 20 дополнительных видов деятельности. Есть торговая марка «G» (действительна до 03.01.2032)."
+  },
+  {
+    id: "solidcore",
+    name: "SOLIDCORE RESOURCES PLC",
+    fullName: "Публичная компания Solidcore Resources plc (ранее — Polymetal International plc)",
+    location: "10 Konaev Street, Office 1306, 13th Floor, Астана, 010000, Казахстан",
+    industry: "Золотодобыча / Драгоценные металлы",
+    website: "https://www.solidcore-resources.com",
+    phones: ["+7 (7172) 47-66-55"],
+    email: "ir@solidcore-resources.com",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "1998 (как Polymetal); переименование — июнь 2024",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "Виталий Несис — Главный исполнительный директор (CEO)",
+    description: "Ведущий производитель золота в Казахстане, акции котируются на Astana International Exchange (тикер AIX: CORE). В 2024 г. компания продала российские активы (АО «Полиметалл») и сменила название с Polymetal International на Solidcore Resources. Производство в 2024 г. — ~490 тыс. унций золота. Стратегия — развитие через геологоразведку и приобретение новых проектов, планируемые инвестиции — более $1 млрд за 5 лет.",
+    subsidiaries: ["Кызыл (область Абай) — действующий рудник Бакырчик", "Варваринский хаб (Костанайская обл.) — рудники Варвара и Комар", "Иртышский ГМК — крупнейший проект развития", "ТОО «Solidcore Eurasia» — управляющая компания в Астане"],
+    contacts: [
+      { fio: "Виталий Несис", position: "CEO", phone: "", email: "" },
+      { fio: "Кирилл Кузнецов", position: "IR (связи с инвесторами)", phone: "+7 (7172) 47-66-55", email: "ir@solidcore-resources.com" },
+      { fio: "Еркин Удербай", position: "Контакт для СМИ", phone: "+7 (7172) 47-66-55", email: "media@solidcore-resources.kz" }
+    ],
+    structure: "Зарегистрирована в AIFC (Astana International Financial Centre), Казахстан.\n\nАктивы:\n• Кызыл (область Абай) — рудник Бакырчик (автоклавная технология POX)\n• Варваринский хаб (Костанайская обл.) — рудники Варвара и Комар (открытая добыча до 2042 г.)\n• Иртышский ГМК — новый проект строительства\n• ТОО «Solidcore Eurasia» (Астана) — представление интересов и управление активами в Казахстане и ЦА.\n\nОснователь — Александр Несис (ICT Group), 1998 г., Санкт-Петербург."
+  },
+  {
+    id: "polyplastic",
+    name: "ГРУППА ПОЛИПЛАСТИК ООО",
+    fullName: "Общество с ограниченной ответственностью «Группа Полипластик»",
+    location: "119530, Москва, Очаковское ш., д. 18, стр. 3, помещ. 014",
+    industry: "Производство полимерных труб и компаундов",
+    website: "https://polyplastic.ru",
+    phones: ["+7 (495) 745-68-57"],
+    email: "info@polyplastic.ru",
+    inn: "5021013384",
+    ogrn: "1045004150476",
+    okpo: "73011750",
+    kpp: "772901001",
+    founded: "02.04.2004 (НПП «Полипластик» с 19.08.1991)",
+    capital: "993 463 937,50 ₽",
+    employees: "—",
+    revenue: "43,9 млрд ₽ (2024)",
+    profit: "—",
+    ceo: "Коржов Олег Викторович — Генеральный директор",
+    description: "Крупнейший в России и ЕАЭС производитель полимерных труб для газо- и водоснабжения, тепловых труб и композиционных материалов. Включает 30 предприятий в России, Белоруссии и Казахстане. Входит в перечень системообразующих организаций РФ (с 2020). Рейтинг АКРА — A-(RU), стабильный (2024, подтверждён в 2025). Контролирующие собственники (нач. 2025): Лев Гориловский (65%), Газпромбанк (25%), Мирон Гориловский (10%). 84 зарегистрированные торговые марки.",
+    subsidiaries: ["Климовский трубный завод", "Кохановский трубный завод (Белоруссия)", "Radius Systems", "AEON Group", "Subterra", "Полимер-Импэкс", "Полиэтр", "Полипластик-Технопол", "Полимер-Композит", "Пластик ООО", "Пластполимерснаб"],
+    contacts: [
+      { fio: "Коржов Олег Викторович", position: "Генеральный директор", phone: "", email: "" },
+      { fio: "Приёмная", position: "Общий контакт", phone: "+7 (495) 745-68-57", email: "info@polyplastic.ru" }
+    ],
+    structure: "Управляющая компания: ООО «Группа Полипластик» (Москва).\n\nНаправления бизнеса:\n1. Производство труб для газо-водоснабжения\n2. Производство тепловых труб\n3. Производство композиционных материалов\n\n30 предприятий в РФ, Белоруссии и Казахстане.\nУчредители: Гориловский Мирон Исаакович, АО «Ааа Управление Капиталом», ООО «Строительно-инжиниринговая группа предприятий»."
+  },
+  {
+    id: "szds",
+    name: "СЕВЗАПДОРСТРОЙ ООО",
+    fullName: "Общество с ограниченной ответственностью «Севзапдорстрой»",
+    location: "163057, Архангельская обл., г. Архангельск, ул. Дачная, д. 59, корп. 1",
+    industry: "Дорожное строительство",
+    website: "https://szds.ru",
+    phones: ["+7 (8182) 61-01-09", "+7 (8182) 61-10-87", "+7 (8182) 61-10-89"],
+    email: "—",
+    inn: "2912003130",
+    ogrn: "1022901320650",
+    okpo: "47709326",
+    kpp: "290101001",
+    founded: "15.07.1998",
+    capital: "10 000 ₽",
+    employees: "510 чел. (2024)",
+    revenue: "2 343 640 000 ₽ (2024)",
+    profit: "1 785 000 ₽ (2024)",
+    ceo: "Нечаев Илья Александрович — Генеральный директор (с 2013 г.)",
+    description: "Одна из крупнейших подрядных дорожно-строительных организаций Архангельской области и Северо-Западного региона. Специализация — строительство, ремонт и реконструкция автомобильных дорог и автомагистралей, разработка гравийных и песчаных карьеров. Основной заказчик — ГКУ «Архангельскавтодор». Участие в 153 торгах (выиграно 117). 23 лицензии на геологическое изучение недр.",
+    subsidiaries: [],
+    contacts: [
+      { fio: "Нечаев Илья Александрович", position: "Генеральный директор", phone: "", email: "" },
+      { fio: "Приёмная", position: "Общий контакт", phone: "+7 (8182) 61-01-09", email: "" }
+    ],
+    structure: "Семейный бизнес.\n\nУчредители (4 физ. лица):\n• Нечаев Александр Федорович — 70%\n• Нечаева Анна Александровна\n• Морозов Александр Александрович\n• Жданов Николай Тихонович\n\n1 филиал. Штат — 510 чел. (2024, снижение на 10% от 2023)."
+  },
+  {
+    id: "sibcem",
+    name: "ХК СИБЦЕМ АО",
+    fullName: "Акционерное общество «Холдинговая Компания «Сибирский Цемент»",
+    location: "650000, Кемеровская область — Кузбасс, г. Кемерово, ул. Карболитовская, стр. 1/4",
+    industry: "Производство цемента",
+    website: "https://sibcem.ru",
+    phones: ["+7 (3842) 49-63-00", "+7 (3842) 49-63-02", "+7 (3842) 25-79-57"],
+    email: "v.grebnev@sibcem.ru",
+    inn: "4205070630",
+    ogrn: "1044205040175",
+    okpo: "74287158",
+    kpp: "420501001",
+    founded: "25.08.2004",
+    capital: "303 525 000 ₽",
+    employees: "523 чел. (2024, только ХК; + тысячи на предприятиях)",
+    revenue: "3 441 967 000 ₽ (2024, ХК)",
+    profit: "4 678 025 000 ₽ (2024, ХК)",
+    ceo: "Шарыкин Олег Витальевич — Президент (с 2014 г.)",
+    description: "Один из крупнейших производителей цемента в России. Общая мощность предприятий — 9 млн тонн цемента в год. Холдинг объединяет цементные заводы в Кемеровской, Новосибирской областях, Красноярском крае и Бурятии. Собственный транспортно-логистический центр «КузбассТрансЦемент» с парком 5 164 единицы ж/д подвижного состава. Представительство в Москве (ул. Жуковского, 17). Совместная частная и иностранная собственность.",
+    subsidiaries: ["ООО «Топкинский цемент» (Топки, Кемеровская обл.)", "ООО «Красноярский цемент» (Красноярск)", "ООО «Тимлюйцемент» (Каменск, Бурятия)", "АО «Искитимцемент» (Искитим, Новосибирская обл.)", "АО «Ангарскцемент»", "ООО «Сибирский бетон» (Новосибирск)", "ООО «КузбассТрансЦемент» (Кемерово)", "ООО «Сибцемсервис» (Кемерово)", "ООО «ЗапСибЦемент» (Кемерово)", "ООО «Горная Компания»"],
+    contacts: [
+      { fio: "Шарыкин Олег Витальевич", position: "Президент", phone: "", email: "" },
+      { fio: "Приёмная ХК", position: "Общий контакт", phone: "+7 (3842) 49-63-00", email: "v.grebnev@sibcem.ru" },
+      { fio: "Представительство (Москва)", position: "Москва, ул. Жуковского, 17", phone: "", email: "" }
+    ],
+    structure: "Холдинговая структура: АО «ХК «Сибцем» — управляющая компания.\n\nЦементные заводы (мощность 9 млн т/год):\n• Топкинский цемент (Кемеровская обл.) — 100%\n• Красноярский цемент — 100%\n• Тимлюйцемент (Бурятия) — 100%\n• Искитимцемент (Новосибирская обл.)\n• Ангарскцемент (Иркутская обл.)\n\nСервисы и логистика:\n• КузбассТрансЦемент — ж/д логистика, 5 164 вагона\n• Сибцемсервис — ремонт, ~400 чел.\n• Сибирский бетон (Новосибирск) — 5%\n\nДолевое участие: 26% — ООО «Русская цементная компания» (Москва)\nОсновной акционер — ООО «ФПС Сибконкорд» (47%) и Олег Шарыкин (6,1%).\n7 филиалов, 12 учреждённых организаций."
+  },
+  {
+    id: "karavan",
+    name: "ТОО «Караван Ресурсис LTD»",
+    fullName: "Товарищество с ограниченной ответственностью «Караван Ресурсис LTD»",
+    location: "Казахстан",
+    industry: "Ресурсы / Торговля",
+    website: "—",
+    phones: [],
+    email: "—",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "ТОО (товарищество с ограниченной ответственностью) зарегистрировано в Казахстане. Подробная публичная информация о деятельности компании в открытых источниках ограничена. Рекомендуется дополнить карточку данными от контактного лица клиента.",
+    subsidiaries: [],
+    contacts: [],
+    structure: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента."
+  },
+  {
+    id: "kari",
+    name: "КАРИ ООО",
+    fullName: "Общество с ограниченной ответственностью «Кари»",
+    location: "Москва",
+    industry: "Ритейл — обувь и аксессуары",
+    website: "https://kari.com",
+    phones: [],
+    email: "—",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Федеральная розничная сеть магазинов обуви и аксессуаров «kari». Одна из крупнейших обувных сетей в России и СНГ с тысячами магазинов. Позиционируется в сегменте массового рынка. Связана с ООО «Купишуз» (совместное управление онлайн-каналом продаж). Головной офис — Москва.",
+    subsidiaries: ["ООО «Купишуз» (связанная структура)"],
+    contacts: [],
+    structure: "Розничная сеть с тысячами магазинов по РФ и СНГ.\nСвязанная структура — ООО «Купишуз» (e-commerce).\nНеобходимо уточнить актуальный менеджмент и реквизиты у клиента."
+  },
+  {
+    id: "kupishuz",
+    name: "КУПИШУЗ ООО",
+    fullName: "Общество с ограниченной ответственностью «Купишуз»",
+    location: "Москва",
+    industry: "E-commerce — обувь и аксессуары",
+    website: "—",
+    phones: [],
+    email: "—",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Онлайн-платформа по продаже обуви, связанная с розничной сетью «kari» (ООО «Кари»). Специализация — e-commerce обувь и аксессуары. Головной офис — Москва.",
+    subsidiaries: [],
+    contacts: [],
+    structure: "Связана с ООО «Кари». Необходимо уточнить структуру и контакты у клиента."
+  },
+  {
+    id: "shchekinoazot",
+    name: "ЩЁКИНОАЗОТ АО",
+    fullName: "Акционерное общество «Щёкиноазот»",
+    location: "Тульская обл., г. Первомайский",
+    industry: "Химическая промышленность",
+    website: "https://n-azot.ru",
+    phones: [],
+    email: "azot@azot.net",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Одно из крупнейших предприятий химической промышленности России. Производство метанола, капролактама, серной кислоты, минеральных удобрений, а также широкого спектра химической продукции. Расположено в г. Первомайский Тульской области. Является градообразующим предприятием.",
+    subsidiaries: [],
+    contacts: [
+      { fio: "Общий контакт", position: "Приёмная", phone: "", email: "azot@azot.net" }
+    ],
+    structure: "Необходимо уточнить актуальную структуру собственности и менеджмента у клиента.\nСайт: n-azot.ru"
+  },
+  {
+    id: "kabex",
+    name: "КАБЕЛЬНЫЙ ЗАВОД КАБЭКС ООО",
+    fullName: "Общество с ограниченной ответственностью «Кабельный завод КАБЭКС»",
+    location: "Свердловская обл., г. Ревда",
+    industry: "Кабельная продукция",
+    website: "https://kabexgroup.ru",
+    phones: [],
+    email: "—",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Производитель кабельно-проводниковой продукции. Расположен в г. Ревда, Свердловская область. Специализация — производство силовых кабелей, контрольных кабелей и проводов различного назначения.",
+    subsidiaries: [],
+    contacts: [],
+    structure: "Необходимо уточнить у клиента.\nСайт: kabexgroup.ru"
+  },
+  {
+    id: "fabrikakompozitov",
+    name: "ФАБРИКА КОМПОЗИТОВ ООО",
+    fullName: "Общество с ограниченной ответственностью «Фабрика Композитов»",
+    location: "Нижегородская обл., г. Нижний Новгород",
+    industry: "Композитные материалы",
+    website: "—",
+    phones: [],
+    email: "—",
+    inn: "5263106214",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Производитель композитных материалов и изделий. Расположено в г. Нижний Новгород. Специализация — разработка и выпуск продукции из полимерных композитных материалов для строительной, автомобильной и других отраслей.",
+    subsidiaries: [],
+    contacts: [],
+    structure: "Необходимо уточнить у клиента."
+  },
+  {
+    id: "indigo",
+    name: "ЗАО «Индиго Таджикистан»",
+    fullName: "Закрытое акционерное общество «Индиго Таджикистан»",
+    location: "Таджикистан",
+    industry: "Телекоммуникации / ИТ",
+    website: "—",
+    phones: [],
+    email: "—",
+    inn: "—",
+    ogrn: "—",
+    okpo: "—",
+    kpp: "—",
+    founded: "—",
+    capital: "—",
+    employees: "—",
+    revenue: "—",
+    profit: "—",
+    ceo: "—",
+    description: "Компания зарегистрирована в Таджикистане. Подробная публичная информация ограничена. Предположительно — деятельность в сфере телекоммуникаций / ИТ / торговли. Рекомендуется уточнить данные у контактного лица клиента.",
+    subsidiaries: [],
+    contacts: [],
+    structure: "Информация не найдена в открытых источниках. Необходимо уточнить у клиента."
+  }
+];
+
+// ===================== ЛОКАЛЬНОЕ ХРАНЕНИЕ =====================
+function saveLocalData() {
+  if (!currentClient) return;
+  const key = "client_" + currentClient.id;
+  const data = {
+    structure: document.getElementById("structureText").value,
+    history: document.getElementById("historyText").value,
+    notes: document.getElementById("notesText").value
+  };
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function loadLocalData() {
+  if (!currentClient) return;
+  const key = "client_" + currentClient.id;
+  const raw = localStorage.getItem(key);
+  if (raw) {
+    const data = JSON.parse(raw);
+    document.getElementById("structureText").value = data.structure || "";
+    document.getElementById("historyText").value = data.history || "";
+    document.getElementById("notesText").value = data.notes || "";
+  } else {
+    document.getElementById("structureText").value = "";
+    document.getElementById("historyText").value = "";
+    document.getElementById("notesText").value = "";
+  }
+}
+
+document.addEventListener("input", function(e) {
+  if (["structureText","historyText","notesText"].includes(e.target.id)) saveLocalData();
+});
+
+// ===================== РЕНДЕР СПИСКА =====================
+let activeElement = null;
+function renderClientList(filteredClients) {
+  const container = document.getElementById("clientList");
+  container.innerHTML = "";
+  filteredClients.forEach(client => {
+    const div = document.createElement("div");
+    div.className = "client-item px-5 py-4 mx-2 rounded-2xl cursor-pointer transition-all";
+    div.innerHTML = `
+      <div class="font-medium text-slate-800 text-[13px]">${client.name}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${client.industry}</div>
+    `;
+    div.onclick = () => {
+      if (activeElement) activeElement.classList.remove("active");
+      div.classList.add("active");
+      activeElement = div;
+      showClient(client.id);
+    };
+    container.appendChild(div);
+  });
+}
+
+// ===================== ПОКАЗ КЛИЕНТА =====================
+let currentClient = null;
+
+function showClient(clientId) {
+  currentClient = clientsData.find(c => c.id === clientId);
+  if (!currentClient) return;
+
+  document.getElementById("welcome").classList.add("hidden");
+  document.getElementById("detailView").classList.remove("hidden");
+
+  document.getElementById("currentClientHeader").innerHTML = `<span class="text-blue-700">${currentClient.name}</span>`;
+  document.getElementById("clientName").textContent = currentClient.name;
+  document.getElementById("clientFullName").textContent = currentClient.fullName;
+  document.getElementById("clientLocationText").textContent = currentClient.location;
+  document.getElementById("clientIndustry").innerHTML = `<i class="fa-solid fa-industry"></i> ${currentClient.industry}`;
+
+  if (currentClient.website && currentClient.website !== "—") {
+    document.getElementById("clientWebsite").href = currentClient.website;
+    document.getElementById("clientWebsiteText").textContent = currentClient.website.replace("https://","");
+    document.getElementById("clientWebsite").classList.remove("hidden");
+  } else {
+    document.getElementById("clientWebsite").classList.add("hidden");
+  }
+
+  // Overview grid
+  const grid = document.getElementById("overviewGrid");
+  const fields = [
+    ["ИНН", currentClient.inn],
+    ["ОГРН", currentClient.ogrn],
+    ["КПП", currentClient.kpp],
+    ["ОКПО", currentClient.okpo],
+    ["Дата регистрации", currentClient.founded],
+    ["Уставный капитал", currentClient.capital],
+    ["Руководитель", currentClient.ceo],
+    ["Сотрудники", currentClient.employees],
+    ["Выручка", currentClient.revenue],
+    ["Прибыль", currentClient.profit],
+    ["Телефоны", currentClient.phones.join(", ") || "—"],
+    ["E-mail", currentClient.email],
+  ];
+  grid.innerHTML = fields.map(([label, value]) =>
+    `<div class="info-label">${label}</div><div class="info-value">${value && value !== "—" ? value : '<span class=\"text-slate-300\">не указано</span>'}</div>`
+  ).join("");
+
+  // Description
+  document.getElementById("clientDescription").textContent = currentClient.description;
+
+  // Subsidiaries
+  const subBlock = document.getElementById("subsidiariesBlock");
+  const subList = document.getElementById("subsidiariesList");
+  if (currentClient.subsidiaries && currentClient.subsidiaries.length > 0) {
+    subBlock.classList.remove("hidden");
+    subList.innerHTML = currentClient.subsidiaries.map(s => `<span class="subsidiary-tag">${s}</span>`).join("");
+  } else {
+    subBlock.classList.add("hidden");
+  }
+
+  // Contacts
+  renderContactsTable();
+
+  // Structure preloaded
+  document.getElementById("structurePreloaded").innerHTML = currentClient.structure
+    ? currentClient.structure.replace(/\n/g, "<br>")
+    : '<span class="text-slate-400">Информация о структуре не загружена.</span>';
+
+  // Load local data
+  loadLocalData();
+
+  switchTab(0);
+}
+
+// ===================== ТАБЫ =====================
+function switchTab(tabIndex) {
+  document.querySelectorAll('.tab').forEach((tab, i) => tab.classList.toggle('tab-active', i === tabIndex));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  document.getElementById(`tabContent${tabIndex}`).classList.remove('hidden');
+}
+
+// ===================== ТАБЛИЦА КОНТАКТОВ =====================
+function renderContactsTable() {
+  const table = document.getElementById("contactsTable");
+  table.innerHTML = `
+    <thead><tr class="border-b">
+      <th class="text-left py-3 font-medium text-slate-500 w-1/4">ФИО / Отдел</th>
+      <th class="text-left py-3 font-medium text-slate-500">Должность</th>
+      <th class="text-left py-3 font-medium text-slate-500">Телефон</th>
+      <th class="text-left py-3 font-medium text-slate-500">Email</th>
+    </tr></thead><tbody id="contactsBody"></tbody>`;
+
+  const body = document.getElementById("contactsBody");
+  if (currentClient.contacts && currentClient.contacts.length > 0) {
+    currentClient.contacts.forEach(contact => {
+      const tr = document.createElement("tr");
+      tr.className = "border-b last:border-0 hover:bg-slate-50";
+      tr.innerHTML = `
+        <td class="py-4 font-medium">${contact.fio}</td>
+        <td class="py-4 text-slate-600">${contact.position || ''}</td>
+        <td class="py-4">${contact.phone || '<span class="text-slate-300">—</span>'}</td>
+        <td class="py-4 text-blue-600">${contact.email ? `<a href="mailto:${contact.email}">${contact.email}</a>` : '<span class="text-slate-300">—</span>'}</td>`;
+      body.appendChild(tr);
+    });
+  } else {
+    body.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400">Контакты пока не добавлены</td></tr>`;
+  }
+}
+
+function addContactRow() {
+  if (!currentClient) return;
+  const fio = prompt("ФИО / Отдел:");
+  if (!fio) return;
+  const position = prompt("Должность:") || "";
+  const phone = prompt("Телефон:") || "";
+  const email = prompt("Email:") || "";
+  currentClient.contacts.push({ fio, position, phone, email });
+  renderContactsTable();
+}
+
+// ===================== ПОИСК =====================
+document.getElementById("searchInput").addEventListener("input", function(e) {
+  const term = e.target.value.toLowerCase();
+  renderClientList(clientsData.filter(c =>
+    c.name.toLowerCase().includes(term) ||
+    c.fullName.toLowerCase().includes(term) ||
+    c.industry.toLowerCase().includes(term) ||
+    c.location.toLowerCase().includes(term)
+  ));
+});
+
+// ===================== КОПИРОВАТЬ =====================
+function copyAllInfo() {
+  if (!currentClient) return alert("Сначала выберите клиента");
+  let t = `${currentClient.name}\n${currentClient.fullName}\n`;
+  t += `Адрес: ${currentClient.location}\nОтрасль: ${currentClient.industry}\n`;
+  t += `ИНН: ${currentClient.inn} | ОГРН: ${currentClient.ogrn}\n`;
+  t += `Руководитель: ${currentClient.ceo}\n`;
+  t += `Телефоны: ${currentClient.phones.join(", ")}\nEmail: ${currentClient.email}\n`;
+  t += `Сайт: ${currentClient.website}\n\n${currentClient.description}`;
+  navigator.clipboard.writeText(t).then(() => alert("Скопировано!"));
+}
+
+// ===================== ИНИЦИАЛИЗАЦИЯ =====================
+renderClientList(clientsData);
+document.getElementById("count").textContent = clientsData.length;
+</script>
+
+</body>
+</html>
